@@ -34,7 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
         goToMarkButton.style.display = "block";
 
         goToMarkButton.addEventListener("click", () => {
-          // Execute a script to scroll to the saved position
           chrome.scripting.executeScript(
             {
               target: { tabId: activeTab.id },
@@ -44,10 +43,10 @@ document.addEventListener("DOMContentLoaded", () => {
             () => {
               if (chrome.runtime.lastError) {
                 console.error("Script injection failed:", chrome.runtime.lastError.message);
-                alert("Failed to navigate to scroll position.");
+                statusDiv.textContent = "Failed to navigate to scroll position.";
               } else {
                 console.log(`Scrolled to position: ${savedScrollY}`);
-                alert("Navigated to saved scroll position!");
+                statusDiv.textContent = "Navigated to saved scroll position.";
               }
             }
           );
@@ -65,5 +64,5 @@ document.addEventListener("DOMContentLoaded", () => {
  * @param {number} scrollY - The vertical scroll position to navigate to.
  */
 function scrollToPosition(scrollY) {
-  window.scrollTo({ top: scrollY, behavior: "smooth" });
+  window.scrollTo(0, scrollY);
 }

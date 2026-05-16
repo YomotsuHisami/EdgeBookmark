@@ -10,7 +10,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create(
     {
       id: "mark-it",
-      title: "Mark It",
+      title: "Mark It!",
       contexts: ["all"]
     },
     () => {
@@ -18,6 +18,21 @@ chrome.runtime.onInstalled.addListener(() => {
         console.error("Error creating context menu:", chrome.runtime.lastError);
       } else {
         console.log("Context menu item 'Mark It' created.");
+      }
+    }
+  );
+
+  chrome.contextMenus.create(
+    {
+      id: "navigate-to-it",
+      title: "Navigated to It!",
+      contexts: ["all"]
+    },
+    () => {
+      if (chrome.runtime.lastError) {
+        console.error("Error creating context menu:", chrome.runtime.lastError);
+      } else {
+        console.log("Context menu item 'Navigated to It!' created.");
       }
     }
   );
@@ -71,6 +86,43 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     } else {
       createNotification("Error", "Cannot mark scroll position on this page.");
     }
+  } else if (info.menuItemId === "navigate-to-it") {
+    console.log("'Navigated to It!' context menu clicked.");
+
+    if (tab.id && tab.url.startsWith("http")) {
+      chrome.storage.local.get([tab.url], (result) => {
+        if (chrome.runtime.lastError) {
+          console.error("Error retrieving scroll position:", chrome.runtime.lastError);
+          createNotification("Error", "Failed to retrieve scroll position.");
+          return;
+        }
+
+        const savedScrollY = result[tab.url];
+
+        if (typeof savedScrollY !== "number") {
+          createNotification("Error", "No saved scroll position for this page.");
+          return;
+        }
+
+        chrome.scripting.executeScript(
+          {
+            target: { tabId: tab.id },
+            func: scrollToPosition,
+            args: [savedScrollY]
+          },
+          () => {
+            if (chrome.runtime.lastError) {
+              console.error("Script injection failed:", chrome.runtime.lastError.message);
+              createNotification("Error", "Failed to navigate to scroll position.");
+            } else {
+              console.log(`Scrolled to position: ${savedScrollY}`);
+            }
+          }
+        );
+      });
+    } else {
+      createNotification("Error", "Cannot navigate to mark on this page.");
+    }
   }
 });
 
@@ -81,6 +133,15 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
  */
 function getScrollPosition() {
   return window.scrollY;
+}
+
+/**
+ * Function to scroll the window to a specific vertical position.
+ * This function is executed within the context of the webpage.
+ * @param {number} scrollY - The vertical scroll position to navigate to.
+ */
+function scrollToPosition(scrollY) {
+  window.scrollTo(0, scrollY);
 }
 
 /**
